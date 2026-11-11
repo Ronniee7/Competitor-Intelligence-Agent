@@ -8,3 +8,6 @@ lxml
 python-dotenv
 pytest
 ruff
+pytest-asyncio
+sqlalchemy
+langgraph
