@@ -7,8 +7,10 @@ from app.api.routes.analysis import router as analysis_router
 from app.api.routes.competitors import router as competitors_router
 from app.api.routes.research import router as research_router
 
+from app.core import logging
 from app.database.connection import Base, engine
 from app.database import models
+
 
 
 @asynccontextmanager

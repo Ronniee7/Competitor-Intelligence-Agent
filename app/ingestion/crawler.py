@@ -4,6 +4,9 @@ from app.ingestion.extractor import extract_page
 from app.ingestion.url_validator import validate_public_url
 from app.models.research import ExtractedPage
 
+from urllib.parse import urljoin, urlsplit
+from urllib.robotparser import RobotFileParser
+
 
 class WebsiteCrawler:
 
@@ -17,7 +20,51 @@ class WebsiteCrawler:
             )
         }
 
+
+    async def can_fetch(self, client, url: str) -> bool:
+
+        
+
+        parsed = urlsplit(url)
+
+        robots_url = (
+            f"{parsed.scheme}://{parsed.netloc}/robots.txt"
+        )
+
+        validate_public_url(robots_url)
+
+        try:
+            response = {await client.get(robots_url)}
+
+        except httpx.HTTPError:
+            # Fail closed when robots policy cannot be checked.
+            return False
+
+        if response.status_code in (404, 410):
+            return True
+
+        if response.status_code != 200:
+            return False
+
+        parser = RobotFileParser()
+
+        parser.set_url(robots_url)
+
+        parser.parse(response.text.splitlines())
+
+        return parser.can_fetch(
+            "CompetitorIntelligenceResearchBot",
+            url,
+        )
+
+    
+
     async def fetch_page(self, url: str) -> ExtractedPage:
+        if not await self.can_fetch(client, current_url):
+            raise ValueError(
+                "Website crawling is disallowed by robots.txt "
+                "or its policy could not be checked."
+            )
 
         validate_public_url(url)
 
@@ -74,3 +121,6 @@ class WebsiteCrawler:
                 )
 
             raise ValueError("Too many redirects.")
+
+
+
