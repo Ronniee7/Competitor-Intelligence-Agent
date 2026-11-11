@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import JSON
+
 from sqlalchemy import (
     DateTime,
     ForeignKey,
@@ -88,4 +90,30 @@ class ResearchPage(Base):
     competitor = relationship(
         "Competitor",
         back_populates="pages",
+    )
+
+
+class IntelligenceReport(Base):
+
+    __tablename__ = "intelligence_reports"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    competitor_id: Mapped[int] = mapped_column(
+        ForeignKey("competitors.id"),
+        nullable=False,
+    )
+
+    report_json: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
     )

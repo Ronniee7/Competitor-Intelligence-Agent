@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.routes.analysis import router as analysis_router
+
 from app.api.routes.competitors import router as competitors_router
 from app.api.routes.research import router as research_router
 
@@ -41,3 +43,4 @@ async def health_check():
 
 app.include_router(research_router)
 app.include_router(competitors_router)
+app.include_router(analysis_router)
