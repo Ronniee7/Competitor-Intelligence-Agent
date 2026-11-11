@@ -11,3 +11,5 @@ ruff
 pytest-asyncio
 sqlalchemy
 langgraph
+streamlit
+requests
