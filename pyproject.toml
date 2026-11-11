@@ -1,15 +1,15 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+addopts = "-m 'not integration'"
+markers = [
+    "integration: tests requiring external services",
+]
 
-pythonpath = ["."]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
-
-markers = [
-    "integration: tests requiring external services",
-]
+ignore = ["B008"]
