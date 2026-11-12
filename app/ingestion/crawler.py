@@ -1,11 +1,12 @@
+
 import httpx
+
+from urllib.parse import urljoin, urlsplit
+from urllib.robotparser import RobotFileParser
 
 from app.ingestion.extractor import extract_page
 from app.ingestion.url_validator import validate_public_url
 from app.models.research import ExtractedPage
-
-from urllib.parse import urljoin, urlsplit
-from urllib.robotparser import RobotFileParser
 
 
 class WebsiteCrawler:
@@ -15,15 +16,10 @@ class WebsiteCrawler:
         self.transport = transport
 
         self.headers = {
-            "User-Agent": (
-                "CompetitorIntelligenceResearchBot/0.1"
-            )
+            "User-Agent": "CompetitorIntelligenceResearchBot/0.1"
         }
 
-
     async def can_fetch(self, client, url: str) -> bool:
-
-        
 
         parsed = urlsplit(url)
 
@@ -34,10 +30,10 @@ class WebsiteCrawler:
         validate_public_url(robots_url)
 
         try:
-            response = {await client.get(robots_url)}
+            response = await client.get(robots_url)
 
         except httpx.HTTPError:
-            # Fail closed when robots policy cannot be checked.
+            # Fail closed if robots.txt cannot be checked.
             return False
 
         if response.status_code in (404, 410):
@@ -49,7 +45,6 @@ class WebsiteCrawler:
         parser = RobotFileParser()
 
         parser.set_url(robots_url)
-
         parser.parse(response.text.splitlines())
 
         return parser.can_fetch(
@@ -57,14 +52,7 @@ class WebsiteCrawler:
             url,
         )
 
-    
-
     async def fetch_page(self, url: str) -> ExtractedPage:
-        if not await self.can_fetch(client, current_url):
-            raise ValueError(
-                "Website crawling is disallowed by robots.txt "
-                "or its policy could not be checked."
-            )
 
         validate_public_url(url)
 
@@ -81,6 +69,13 @@ class WebsiteCrawler:
 
                 validate_public_url(current_url)
 
+                # Check robots.txt before fetching each destination.
+                if not await self.can_fetch(client, current_url):
+                    raise ValueError(
+                        "Website crawling is disallowed by robots.txt "
+                        "or its policy could not be checked."
+                    )
+
                 response = await client.get(current_url)
 
                 if response.is_redirect:
@@ -88,13 +83,13 @@ class WebsiteCrawler:
                     location = response.headers.get("location")
 
                     if not location:
-                        raise ValueError("Redirect has no destination.")
-
-                    from urllib.parse import urljoin
+                        raise ValueError(
+                            "Redirect has no destination."
+                        )
 
                     current_url = urljoin(
                         str(response.url),
-                        location
+                        location,
                     )
 
                     continue
@@ -103,7 +98,7 @@ class WebsiteCrawler:
 
                 content_type = response.headers.get(
                     "content-type",
-                    ""
+                    "",
                 ).lower()
 
                 if "text/html" not in content_type:
@@ -112,7 +107,9 @@ class WebsiteCrawler:
                     )
 
                 if len(response.content) > 2_000_000:
-                    raise ValueError("Page exceeds the 2 MB limit.")
+                    raise ValueError(
+                        "Page exceeds the 2 MB limit."
+                    )
 
                 return extract_page(
                     html=response.text,
@@ -121,6 +118,3 @@ class WebsiteCrawler:
                 )
 
             raise ValueError("Too many redirects.")
-
-
-
