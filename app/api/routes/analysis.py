@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+import logging
+
 from app.agents.intelligence_graph import intelligence_graph
 
 from app.database.connection import get_db
@@ -73,10 +75,19 @@ async def analyse_competitor(
         pages=extracted_pages,
     )
 
+    logger = logging.getLogger(__name__)
+
     result = await intelligence_graph.ainvoke({
         "profile": profile,
         "errors": [],
     })
+
+    logger.info("GRAPH RESULT KEYS: %s", result.keys())
+    logger.info("GRAPH ERRORS: %s", result.get("errors"))
+    logger.info(
+        "INTELLIGENCE GENERATED: %s",
+        result.get("intelligence") is not None,
+    )
 
     if result.get("errors") or not result.get("intelligence"):
 

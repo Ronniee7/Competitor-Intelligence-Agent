@@ -1,4 +1,6 @@
+
 from app.models.intelligence import CompetitorIntelligence
+
 
 def generate_markdown_report(
     intelligence: CompetitorIntelligence,
@@ -36,6 +38,7 @@ def generate_markdown_report(
                 "No supported findings available.",
                 "",
             ])
+            continue
 
         for finding in findings:
 
@@ -60,8 +63,13 @@ def generate_markdown_report(
         "",
     ])
 
-    for gap in intelligence.information_gaps:
-        lines.append(f"- {gap}")
+    information_gaps = intelligence.information_gaps or []
+
+    if information_gaps:
+        for gap in information_gaps:
+            lines.append(f"- {gap}")
+    else:
+        lines.append("No information gaps recorded.")
 
     lines.extend([
         "",

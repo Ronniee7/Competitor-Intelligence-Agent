@@ -7,7 +7,7 @@ class Finding(BaseModel):
 
     evidence: str
 
-    source_url: str
+    source_url: str | None = None
 
     verified: bool = False
 
